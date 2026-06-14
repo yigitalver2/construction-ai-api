@@ -1,20 +1,13 @@
 """
 Sam3Detector - connects the trained SAM3 LoRA model to the site.
 
-To go live you only need to:
-    1) Install the ML deps: pip install torch transformers peft pillow numpy
-    2) Make sure the trained LoRA checkpoint exists at SAM3_CHECKPOINT path
-    3) Set env vars:
-         DETECTOR_BACKEND=sam3
-         SAM3_REPO_PATH=/path/to/SAM3
-         SAM3_CHECKPOINT=checkpoints/mc_epoch_1_lora  (relative to SAM3_REPO_PATH)
-         SAM3_MODEL_NAME=facebook/sam3
-
-Heavy imports (torch/transformers/peft) happen lazily inside _load(), so when
-DETECTOR_BACKEND=mock the site runs with zero ML dependencies.
+Uses the SAM3 repo's own inference approach: each damage class is queried
+separately as a text prompt, and the model returns a segmentation mask per class.
 """
 import os
 import sys
+
+import numpy as np
 
 from app.core.config import settings
 from app.services.detector import (
@@ -26,11 +19,8 @@ from app.services.detector import (
 
 
 class Sam3Detector(BaseDetector):
-    """Runs the fine-tuned SAM3 model and maps its masks to DetectionResult."""
-
     backend_name = "sam3"
 
-    # Loaded once and reused across requests (model load is expensive).
     _model = None
     _processor = None
 
@@ -39,36 +29,29 @@ class Sam3Detector(BaseDetector):
         self.threshold = settings.DAMAGE_CONFIDENCE_THRESHOLD
 
     def _checkpoint_path(self) -> str:
-        """Resolve the LoRA checkpoint path (relative paths are under the SAM3 repo)."""
         ckpt = settings.SAM3_CHECKPOINT
         if os.path.isabs(ckpt):
             return ckpt
         return os.path.join(settings.SAM3_REPO_PATH, ckpt)
 
     def _load(self):
-        """
-        Load the base SAM3 model + processor and apply the trained LoRA adapter.
-
-        Runs only once; subsequent calls reuse the cached model.
-        """
         if Sam3Detector._model is not None:
             return
 
         import torch
-        from transformers import AutoProcessor, AutoModelForSemanticSegmentation
+        from transformers import AutoProcessor, AutoModel
         from peft import PeftModel
 
-        # Add SAM3 repo to sys.path so its internal imports work.
         repo = settings.SAM3_REPO_PATH
         if repo not in sys.path:
             sys.path.insert(0, repo)
 
+        token = os.environ.get("HF_TOKEN")
         ckpt = self._checkpoint_path()
+
         print(f"[sam3] Loading base model {settings.SAM3_MODEL_NAME} ...")
-        processor = AutoProcessor.from_pretrained(settings.SAM3_MODEL_NAME)
-        base_model = AutoModelForSemanticSegmentation.from_pretrained(
-            settings.SAM3_MODEL_NAME
-        )
+        processor = AutoProcessor.from_pretrained(settings.SAM3_MODEL_NAME, token=token)
+        base_model = AutoModel.from_pretrained(settings.SAM3_MODEL_NAME, token=token)
 
         print(f"[sam3] Applying LoRA adapter from {ckpt} ...")
         model = PeftModel.from_pretrained(base_model, ckpt)
@@ -80,39 +63,54 @@ class Sam3Detector(BaseDetector):
 
     def analyze(self, image_path: str) -> DetectionResult:
         import torch
-        import numpy as np
         from PIL import Image
 
         self._load()
 
-        image = Image.open(image_path).convert("RGB")
-        inputs = Sam3Detector._processor(images=image, return_tensors="pt")
+        model = Sam3Detector._model
+        processor = Sam3Detector._processor
 
-        with torch.no_grad():
-            outputs = Sam3Detector._model(**inputs)
+        gorsel = Image.open(image_path).convert("RGB")
 
-        # outputs.logits: (1, num_classes, H, W)
-        logits = outputs.logits[0]  # (num_classes, H, W)
-        probs = torch.sigmoid(logits).numpy()  # (num_classes, H, W)
+        # Görseli bir kez işle — tüm sınıflar için aynı pixel_values
+        image_inputs = processor.image_processor(images=gorsel, return_tensors="pt")
+        pixel_values = image_inputs["pixel_values"]
 
-        total_pixels = probs.shape[1] * probs.shape[2]
         classes = []
 
-        for idx, label in enumerate(DAMAGE_CLASSES):
-            if idx >= probs.shape[0]:
-                break
-            class_prob = probs[idx]  # (H, W)
-            mask = class_prob > self.threshold
-            coverage = float(mask.sum()) / total_pixels
-            if coverage < self.min_coverage:
-                continue
-            confidence = float(class_prob[mask].mean()) if mask.any() else 0.0
-            classes.append(
-                DetectedClass(
-                    label=label,
-                    coverage=round(coverage, 4),
-                    confidence=round(confidence, 4),
+        model.eval()
+        with torch.no_grad():
+            for label in DAMAGE_CLASSES:
+                text_inputs = processor.tokenizer(
+                    label,
+                    return_tensors="pt",
+                    padding=True,
+                    truncation=True,
                 )
-            )
+
+                outputs = model(
+                    pixel_values=pixel_values,
+                    input_ids=text_inputs["input_ids"],
+                    attention_mask=text_inputs["attention_mask"],
+                )
+
+                # semantic_seg: (1, 1, H, W) logits
+                logits = outputs.semantic_seg.squeeze()
+                prob = logits.sigmoid().cpu().numpy()  # (H, W)
+
+                mask = prob > self.threshold
+                coverage = float(mask.sum()) / (prob.shape[0] * prob.shape[1])
+
+                if coverage < self.min_coverage:
+                    continue
+
+                confidence = float(prob[mask].mean()) if mask.any() else 0.0
+                classes.append(
+                    DetectedClass(
+                        label=label,
+                        coverage=round(coverage, 4),
+                        confidence=round(confidence, 4),
+                    )
+                )
 
         return DetectionResult(classes=classes, backend=self.backend_name)
