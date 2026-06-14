@@ -1,0 +1,7 @@
+# Extra dependencies needed ONLY when DETECTOR_BACKEND=sam3.
+# torch / torchvision are installed separately in the Dockerfile (CPU wheels).
+transformers
+peft
+huggingface_hub
+Pillow
+numpy
