@@ -44,8 +44,8 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
 
     # Cloudinary (image storage)
-    CLOUDINARY_CLOUD_NAME: str = "dw3rna1y5"
-    CLOUDINARY_API_KEY: str = "678474193169896"
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
     CLOUDINARY_API_SECRET: str = ""
 
     # AI Detector backend: "mock" (default) or "sam3"
