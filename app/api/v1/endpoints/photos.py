@@ -126,6 +126,7 @@ async def upload_photos(
             photo_response = PhotoResponse.model_validate(db_photo)
             photo_response.url = image_url
             photo_response.thumbnail = image_url
+            photo_response.thumbnail_url = image_url
             photo_response.status = "pending"
             uploaded_photos.append(photo_response)
 

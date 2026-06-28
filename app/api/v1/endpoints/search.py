@@ -99,8 +99,8 @@ async def search_images(
             category=photo.category,
             description=photo.description,
             confidence=photo.confidence,
-            thumbnail=get_photo_url(photo.filename),
-            url=get_photo_url(photo.filename),
+            thumbnail=get_photo_url(photo),
+            url=get_photo_url(photo),
             created_at=photo.created_at.isoformat() if photo.created_at else ""
         ))
     
