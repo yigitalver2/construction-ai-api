@@ -160,6 +160,23 @@ async def get_photo(
     return photo_response
 
 
+@router.delete("/broken")
+async def delete_broken_photos(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Delete all photos whose image is missing (not on Cloudinary) for the current user."""
+    photos = db.query(Photo).filter(
+        Photo.user_id == current_user.id,
+        ~Photo.file_path.startswith("http"),
+    ).all()
+    count = len(photos)
+    for photo in photos:
+        db.delete(photo)
+    db.commit()
+    return {"success": True, "deleted": count, "message": f"{count} broken photo(s) removed"}
+
+
 @router.delete("/{photo_id}")
 async def delete_photo(
     photo_id: int,
