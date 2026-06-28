@@ -1,143 +1,118 @@
 import React, { useState } from 'react';
 import QueryBar from '../components/search/QueryBar';
-import FilterChips from '../components/search/FilterChips';
-import ResultsToolbar from '../components/search/ResultsToolbar';
 import ImageCard from '../components/cards/ImageCard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
-import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
-import { searchImages } from '../services/api';
+import { nlSearch } from '../services/api';
 import './SearchPage.css';
 
 const SearchPage = () => {
   const [results, setResults] = useState([]);
+  const [parsedFilters, setParsedFilters] = useState(null);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [filters, setFilters] = useState({
-    dateRange: 'Last 7 days',
-    category: 'All'
-  });
-  const [sortBy, setSortBy] = useState('relevance');
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleSearch = async (query) => {
+    if (query.trim() === '') return;
     try {
       setLoading(true);
       setHasSearched(true);
-      const data = await searchImages(query, filters);
-      setResults(data);
-    } catch (error) {
-      console.error('Search error:', error);
+      setError(null);
+      const data = await nlSearch(query);
+      setResults(data.results);
+      setParsedFilters(data.parsed_filters);
+    } catch (err) {
+      console.error('Search error:', err);
+      setError('Search failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const handleClear = () => {
+    setHasSearched(false);
+    setResults([]);
+    setParsedFilters(null);
+    setError(null);
   };
 
-  const handleExport = () => {
-    alert('Exporting search results...');
-  };
+  const filterChips = parsedFilters ? [
+    ...(parsedFilters.categories || []),
+    parsedFilters.confidence_min != null
+      ? `Confidence ≥ ${(parsedFilters.confidence_min * 100).toFixed(0)}%`
+      : null,
+    parsedFilters.date_from ? `From ${parsedFilters.date_from}` : null,
+    parsedFilters.date_to   ? `To ${parsedFilters.date_to}`   : null,
+  ].filter(Boolean) : [];
 
   return (
     <div className="search-page">
       <div className="search-header">
         <h1 className="page-title">AI Search</h1>
         <p className="page-description">
-          Search through site photos using natural language queries
+          Search through site photos using natural language
         </p>
       </div>
 
       <div className="search-query-section">
-        <QueryBar 
+        <QueryBar
           onSearch={handleSearch}
-          placeholder="Describe what you're looking for... (e.g., 'concrete work in the last week')"
+          placeholder='e.g. "high confidence cracks from last week"'
         />
       </div>
 
-      <div className="search-filters-section">
-        <FilterChips filters={filters} onFilterChange={handleFilterChange} />
-      </div>
-
-      {loading && (
-        <LoadingSpinner text="Searching through photos..." />
+      {hasSearched && !loading && parsedFilters && (
+        <div className="search-understood">
+          <span className="understood-label">Understood:</span>
+          {filterChips.length > 0
+            ? filterChips.map((chip) => (
+                <span key={chip} className="understood-chip">{chip}</span>
+              ))
+            : <span className="understood-chip">All photos</span>
+          }
+          {parsedFilters.summary && (
+            <span className="understood-summary">— {parsedFilters.summary}</span>
+          )}
+        </div>
       )}
 
-      {!loading && hasSearched && results.length > 0 && (
+      {loading && <LoadingSpinner text="Analysing query…" />}
+
+      {!loading && error && (
+        <EmptyState icon="⚠️" title="Error" description={error} action={<Button onClick={handleClear}>Clear</Button>} />
+      )}
+
+      {!loading && hasSearched && !error && results.length > 0 && (
         <div className="search-results-section">
-          <ResultsToolbar
-            resultCount={results.length}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            onExport={handleExport}
-          />
+          <div className="search-results-meta">
+            {results.length} result{results.length === 1 ? '' : 's'}
+          </div>
           <div className="search-results-grid">
             {results.map((image) => (
-              <div key={image.image_id} className="search-result-item">
-                <ImageCard
-                  image={image}
-                  onClick={() => setSelectedImage(image)}
-                />
-                {image.score && (
-                  <div className="relevance-score">
-                    Relevance: {(image.score * 100).toFixed(0)}%
-                  </div>
-                )}
-              </div>
+              <ImageCard key={image.id} image={image} />
             ))}
           </div>
         </div>
       )}
 
-      {!loading && hasSearched && results.length === 0 && (
+      {!loading && hasSearched && !error && results.length === 0 && (
         <EmptyState
           icon="🔍"
           title="No results found"
-          description="Try adjusting your query or filters"
-          action={
-            <Button onClick={() => setHasSearched(false)}>
-              Clear Search
-            </Button>
-          }
+          description="Try a different query or broaden your criteria"
+          action={<Button onClick={handleClear}>Clear Search</Button>}
         />
       )}
 
       {!loading && !hasSearched && (
         <EmptyState
           icon="🚀"
-          title="Start searching"
-          description="Enter a natural language query above to find relevant photos"
+          title="Ask anything"
+          description='Try: "crack detections with high confidence last month"'
         />
       )}
-
-      <Modal
-        isOpen={!!selectedImage}
-        onClose={() => setSelectedImage(null)}
-        title="Photo Details"
-        size="lg"
-      >
-        {selectedImage && (
-          <div className="image-detail">
-            <img
-              src={selectedImage.image_url}
-              alt={selectedImage.description}
-              className="image-detail-photo"
-            />
-            <div className="image-detail-info">
-              <p><strong>Category:</strong> {selectedImage.category}</p>
-              <p><strong>Status:</strong> {selectedImage.status}</p>
-              <p><strong>Uploaded:</strong> {new Date(selectedImage.uploaded_at).toLocaleDateString()}</p>
-              <p><strong>Description:</strong> {selectedImage.description}</p>
-              {selectedImage.score && (
-                <p><strong>Relevance Score:</strong> {(selectedImage.score * 100).toFixed(1)}%</p>
-              )}
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };

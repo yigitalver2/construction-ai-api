@@ -23,23 +23,22 @@ export const getStats = async () => {
   return response.data;
 };
 
-// Search API
+// Search API (keyword)
 export const searchImages = async (query, filters = {}) => {
   if (USE_MOCK) {
     await delay(800);
-    // Filter mock images based on category
     let results = [...mockImages];
-    if (filters.category && filters.category !== 'All') {
-      results = results.filter(img => img.category === filters.category);
-    }
+    if (filters.category && filters.category !== 'All') results = results.filter(img => img.category === filters.category);
     return results;
   }
-  const response = await apiClient.post('/search', {
-    query,
-    top_k: 50,
-    filters
-  });
+  const response = await apiClient.post('/search', { query, top_k: 50, filters });
   return response.data;
+};
+
+// Natural-language search via Gemini
+export const nlSearch = async (query, top_k = 50) => {
+  const response = await apiClient.post('/search/nl', { query, top_k });
+  return response.data; // { results, parsed_filters, total }
 };
 
 // Photos API
