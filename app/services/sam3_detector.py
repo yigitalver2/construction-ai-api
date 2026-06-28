@@ -40,6 +40,14 @@ class Sam3Detector(BaseDetector):
             return
 
         import torch
+        # --- TEMP DEBUG (remove later): verify GPU/CUDA visibility at load time ---
+        print(f"[DEBUG] torch version: {torch.__version__}")
+        print(f"[DEBUG] CUDA available: {torch.cuda.is_available()}")
+        if torch.cuda.is_available():
+            print(f"[DEBUG] CUDA device: {torch.cuda.get_device_name(0)}")
+        else:
+            print(f"[DEBUG] CUDA not available, reason check needed")
+        # --- END TEMP DEBUG ---
         # Sam3Model = static-image segmentation head (returns Sam3ImageSegmentationOutput
         # with .semantic_seg). AutoModel.from_pretrained("facebook/sam3") instead resolves
         # to Sam3VideoModel, whose forward() requires an inference_session we don't have.
