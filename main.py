@@ -8,7 +8,6 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
-from app.core.database import engine, Base
 from app.api.v1 import api_router
 
 
@@ -16,18 +15,17 @@ from app.api.v1 import api_router
 async def lifespan(app: FastAPI):
     """
     Application lifespan handler.
-    Creates database tables on startup.
+
+    The database schema is owned by Alembic migrations (run via
+    `alembic upgrade head` at container start — see Dockerfile CMD), so we no
+    longer create tables here. This keeps schema changes versioned and avoids
+    the "model has a column the table doesn't" 500s.
     """
-    # Startup: Create database tables
-    print("Creating database tables...")
-    Base.metadata.create_all(bind=engine)
-    print("Database tables created successfully!")
-    
     # Create uploads directory if not exists
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    
+
     yield
-    
+
     # Shutdown: Cleanup if needed
     print("Application shutting down...")
 

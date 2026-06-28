@@ -38,4 +38,6 @@ ENV DETECTOR_BACKEND=mock \
     DEBUG=false
 
 EXPOSE 7860
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
+# Apply DB migrations (creates tables on a fresh DB, adds new columns on an
+# existing one) before starting the server, so schema is always up to date.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 7860"]
