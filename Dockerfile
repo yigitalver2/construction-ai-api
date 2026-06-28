@@ -23,7 +23,7 @@ RUN git clone --depth 1 https://github.com/AI-Object-Dedection/sam3.git /app/SAM
 COPY --chown=user requirements.txt requirements-sam3.txt ./
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu \
+    && pip install --no-cache-dir torch torchvision \
     && pip install --no-cache-dir -r requirements-sam3.txt
 
 # Backend application code.
