@@ -1,8 +1,13 @@
 """
 Application Configuration
 """
+import os
+
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+# Repo root = two levels up from this file (app/core/config.py).
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class Settings(BaseSettings):
@@ -44,7 +49,9 @@ class Settings(BaseSettings):
 
     # SAM3 settings (only used when DETECTOR_BACKEND=sam3)
     SAM3_REPO_PATH: str = "/app/SAM3"
-    SAM3_CHECKPOINT: str = "/app/sam3_checkpoint"
+    # Trained LoRA adapter bundled in this repo (app/adapter/). Absolute path so
+    # it resolves the same in local dev and inside the Docker image (/app/app/adapter).
+    SAM3_CHECKPOINT: str = os.path.join(_REPO_ROOT, "app", "adapter")
     SAM3_MODEL_NAME: str = "facebook/sam3"
     SAM3_MIN_COVERAGE: float = 0.01
 

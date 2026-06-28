@@ -15,8 +15,8 @@ ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
 WORKDIR /app
 
-# SAM3 inference code. The trained LoRA checkpoint is NOT in this repo
-# (gitignored) - it is added to the Space separately (see SAM3_CHECKPOINT).
+# SAM3 inference code. The trained LoRA adapter itself ships inside this repo
+# at app/adapter/ (small, ~8MB) and is loaded on top of the facebook/sam3 base.
 RUN git clone --depth 1 https://github.com/AI-Object-Dedection/sam3.git /app/SAM3
 
 # Python dependencies.
@@ -34,7 +34,6 @@ ENV DETECTOR_BACKEND=mock \
     DATABASE_URL=sqlite:///./app.db \
     UPLOAD_DIR=/app/uploads \
     SAM3_REPO_PATH=/app/SAM3 \
-    SAM3_CHECKPOINT=/app/sam3_checkpoint \
     SAM3_MODEL_NAME=facebook/sam3 \
     DEBUG=false
 

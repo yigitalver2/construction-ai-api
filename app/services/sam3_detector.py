@@ -23,6 +23,7 @@ class Sam3Detector(BaseDetector):
 
     _model = None
     _processor = None
+    _device = None
 
     def __init__(self):
         self.min_coverage = settings.SAM3_MIN_COVERAGE
@@ -49,17 +50,22 @@ class Sam3Detector(BaseDetector):
         token = os.environ.get("HF_TOKEN")
         ckpt = self._checkpoint_path()
 
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
         print(f"[sam3] Loading base model {settings.SAM3_MODEL_NAME} ...")
         processor = AutoProcessor.from_pretrained(settings.SAM3_MODEL_NAME, token=token)
         base_model = AutoModel.from_pretrained(settings.SAM3_MODEL_NAME, token=token)
 
         print(f"[sam3] Applying LoRA adapter from {ckpt} ...")
+        # Load the base model first, then stack the trained LoRA adapter on top.
         model = PeftModel.from_pretrained(base_model, ckpt)
-        model.eval()
+        model.to(device)
+        model.eval()  # adapter_config has inference_mode=true, but make it explicit
 
         Sam3Detector._processor = processor
         Sam3Detector._model = model
-        print("[sam3] Model ready.")
+        Sam3Detector._device = device
+        print(f"[sam3] Model ready on {device}.")
 
     def analyze(self, image_path: str) -> DetectionResult:
         import torch
@@ -69,12 +75,13 @@ class Sam3Detector(BaseDetector):
 
         model = Sam3Detector._model
         processor = Sam3Detector._processor
+        device = Sam3Detector._device
 
         gorsel = Image.open(image_path).convert("RGB")
 
         # Görseli bir kez işle — tüm sınıflar için aynı pixel_values
         image_inputs = processor.image_processor(images=gorsel, return_tensors="pt")
-        pixel_values = image_inputs["pixel_values"]
+        pixel_values = image_inputs["pixel_values"].to(device)
 
         classes = []
 
@@ -90,8 +97,8 @@ class Sam3Detector(BaseDetector):
 
                 outputs = model(
                     pixel_values=pixel_values,
-                    input_ids=text_inputs["input_ids"],
-                    attention_mask=text_inputs["attention_mask"],
+                    input_ids=text_inputs["input_ids"].to(device),
+                    attention_mask=text_inputs["attention_mask"].to(device),
                 )
 
                 # semantic_seg: (1, 1, H, W) logits
