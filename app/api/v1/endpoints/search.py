@@ -63,50 +63,40 @@ class NLSearchResponse(BaseModel):
     total: int
 
 
-def _parse_query_with_gemini(query: str) -> ParsedFilters:
-    """Use Gemini to turn a natural-language query into structured filters."""
-    import google.generativeai as genai
+def _parse_query_with_openai(query: str) -> ParsedFilters:
+    """Use GPT-4o-mini to turn a natural-language query into structured filters."""
+    from openai import OpenAI
 
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
-
+    client = OpenAI(api_key=settings.OPENAI_API_KEY)
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     classes_str = ", ".join(DAMAGE_CLASSES)
 
-    prompt = f"""You are a filter parser for a construction damage inspection app.
-Today's date is {today}.
+    system = (
+        "You are a filter parser for a construction damage inspection app. "
+        "Return ONLY a valid JSON object — no markdown, no explanation."
+    )
+    user = f"""Today is {today}.
+Available damage categories (exact spelling): {classes_str}
 
-Available damage categories (use exact spelling): {classes_str}
+User query: "{query}"
 
-The user typed: "{query}"
-
-Return ONLY valid JSON with these fields (omit fields that don't apply):
+Return JSON:
 {{
-  "categories": [],        // list of matching damage class names from the list above
-  "damage_labels": [],     // same as categories (copy it)
-  "confidence_min": null,  // float 0-1, e.g. 0.8 for "high confidence" or "above 80%"
-  "date_from": null,       // ISO date string YYYY-MM-DD
-  "date_to": null,         // ISO date string YYYY-MM-DD
-  "summary": ""            // short human-readable summary of what you understood, in English, max 10 words
-}}
+  "categories": [],        // matching damage class names from the list (empty = all)
+  "damage_labels": [],     // copy of categories
+  "confidence_min": null,  // float 0-1; "high confidence" → 0.75, "above 80%" → 0.8
+  "date_from": null,       // YYYY-MM-DD; "last week" = 7 days ago, "last month" = 30 days ago
+  "date_to": null,         // YYYY-MM-DD
+  "summary": ""            // ≤10-word English summary of what you understood
+}}"""
 
-Rules:
-- "last week" = last 7 days from today
-- "last month" = last 30 days
-- "high confidence" = confidence_min 0.75
-- "low confidence" = confidence_min null, add note in summary
-- If no date mentioned, leave date fields null
-- If no category mentioned, leave categories empty (will search all)
-- Return ONLY the JSON object, no markdown, no explanation"""
-
-    resp = model.generate_content(prompt)
-    raw = resp.text.strip()
-    # Strip markdown code fences if present
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-    data = json.loads(raw.strip())
+    resp = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+        response_format={"type": "json_object"},
+        temperature=0,
+    )
+    data = json.loads(resp.choices[0].message.content)
     return ParsedFilters(**data)
 
 
@@ -132,7 +122,7 @@ async def nl_search(
     current_user=Depends(get_current_user),
 ):
     """Natural-language search: parse the query with Gemini, then run a structured DB query."""
-    parsed = _parse_query_with_gemini(request.query)
+    parsed = _parse_query_with_openai(request.query)
 
     db_query = db.query(Photo).filter(Photo.user_id == current_user.id)
 
