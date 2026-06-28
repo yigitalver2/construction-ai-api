@@ -1,0 +1,72 @@
+.kpi-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.kpi-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.kpi-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.kpi-card-icon {
+  font-size: 2rem;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+}
+
+.kpi-card-change {
+  padding: 0.25rem 0.625rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.kpi-card-change.positive {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.kpi-card-change.negative {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.kpi-card-body {
+  margin-top: 0.75rem;
+}
+
+.kpi-card-value {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1d2e;
+  line-height: 1.2;
+}
+
+.kpi-card-title {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.95rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.kpi-card-description {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}

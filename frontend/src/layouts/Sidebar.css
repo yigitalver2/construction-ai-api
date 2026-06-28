@@ -1,0 +1,120 @@
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background: #1a1d2e;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 1.5rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.sidebar-nav {
+  padding: 1rem 0.75rem;
+  flex: 1;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.25rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.2s;
+  font-size: 0.95rem;
+}
+
+.sidebar-nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.sidebar-nav-item.active {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.sidebar-nav-icon {
+  font-size: 1.25rem;
+  margin-right: 0.75rem;
+}
+
+.sidebar-nav-label {
+  font-weight: 500;
+}
+
+.sidebar-recent {
+  padding: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+}
+
+.sidebar-recent-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 0.75rem 0;
+  font-weight: 600;
+}
+
+.sidebar-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebar-recent-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-recent-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* Scrollbar styling */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

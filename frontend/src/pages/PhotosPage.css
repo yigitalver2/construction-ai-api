@@ -1,0 +1,146 @@
+.photos-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.photos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.page-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1d2e;
+}
+
+.page-description {
+  margin: 0;
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.photos-toolbar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.photos-search {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.photos-search:focus {
+  outline: none;
+  border-color: #4f46e5;
+}
+
+.photos-sort {
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.photos-sort:focus {
+  outline: none;
+  border-color: #4f46e5;
+}
+
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.upload-dropzone {
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upload-dropzone:hover {
+  border-color: #4f46e5;
+  background: #f9fafb;
+}
+
+.upload-dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.upload-text {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.upload-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.image-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.image-detail-photo {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.image-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.image-detail-info p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.image-detail-info strong {
+  color: #1a1d2e;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .photos-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .photos-toolbar {
+    flex-direction: column;
+  }
+
+  .photos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}

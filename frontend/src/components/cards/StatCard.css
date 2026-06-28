@@ -1,0 +1,30 @@
+.stat-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.stat-card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-card-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1d2e;
+}
+
+.stat-card-action {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.stat-card-body {
+  padding: 1.5rem;
+}
