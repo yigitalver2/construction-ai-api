@@ -217,17 +217,31 @@ const PhotosPage = () => {
       >
         {selectedImage && (
           <div className="image-detail">
-            <img
-              src={selectedImage.image_url}
-              alt={selectedImage.description}
-              className="image-detail-photo"
-            />
+            {selectedImage.mask_url ? (
+              <div className="image-detail-mask-section">
+                <p className="image-detail-mask-label">Segmentation Analysis</p>
+                <img
+                  src={selectedImage.mask_url}
+                  alt="Segmentation mask"
+                  className="image-detail-photo"
+                />
+              </div>
+            ) : (
+              <img
+                src={selectedImage.url}
+                alt={selectedImage.description || 'Site photo'}
+                className="image-detail-photo"
+              />
+            )}
             <div className="image-detail-info">
-              <p><strong>Category:</strong> {selectedImage.category}</p>
+              {selectedImage.category && (
+                <p><strong>Category:</strong> {selectedImage.category}</p>
+              )}
               <p><strong>Status:</strong> {selectedImage.status}</p>
-              <p><strong>AI Status:</strong> {selectedImage.ai_status}</p>
               <p><strong>Uploaded:</strong> {new Date(selectedImage.uploaded_at).toLocaleDateString()}</p>
-              <p><strong>Description:</strong> {selectedImage.description}</p>
+              {selectedImage.description && (
+                <p><strong>Description:</strong> {selectedImage.description}</p>
+              )}
             </div>
           </div>
         )}

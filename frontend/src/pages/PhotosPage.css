@@ -113,6 +113,21 @@
   border-radius: 8px;
 }
 
+.image-detail-mask-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.image-detail-mask-label {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .image-detail-info {
   display: flex;
   flex-direction: column;
