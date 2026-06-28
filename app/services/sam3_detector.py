@@ -64,15 +64,29 @@ class Sam3Detector(BaseDetector):
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        print(f"[sam3] Loading base model {settings.SAM3_MODEL_NAME} (Sam3Model) ...")
+        # --- TEMP DEBUG (remove later): flush=True so each line shows even if it
+        # hangs on the next step (uvicorn/Docker stdout is otherwise buffered). ---
+        print(f"[DEBUG] target device = {device}", flush=True)
+        print(f"[DEBUG] Loading processor {settings.SAM3_MODEL_NAME} ...", flush=True)
         processor = Sam3Processor.from_pretrained(settings.SAM3_MODEL_NAME, token=token)
+
+        print("[DEBUG] Processor loaded. Starting Sam3Model.from_pretrained ...", flush=True)
         base_model = Sam3Model.from_pretrained(settings.SAM3_MODEL_NAME, token=token)
 
-        print(f"[sam3] Applying LoRA adapter from {ckpt} ...")
+        print("[DEBUG] Base model loaded (CPU). Moving base model to device ...", flush=True)
+        base_model = base_model.to(device)
+
+        print(f"[DEBUG] Base on {device}. Loading PeftModel adapter from {ckpt} ...", flush=True)
         # Load the base model first, then stack the trained LoRA adapter on top.
         model = PeftModel.from_pretrained(base_model, ckpt)
-        model.to(device)
+
+        print("[DEBUG] PeftModel loaded. Moving full model to device ...", flush=True)
+        model = model.to(device)
+
+        print("[DEBUG] Model on device. Calling eval() ...", flush=True)
         model.eval()  # adapter_config has inference_mode=true, but make it explicit
+        print("[DEBUG] Model fully ready.", flush=True)
+        # --- END TEMP DEBUG ---
 
         Sam3Detector._processor = processor
         Sam3Detector._model = model
