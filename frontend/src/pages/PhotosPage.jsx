@@ -217,7 +217,12 @@ const PhotosPage = () => {
       >
         {selectedImage && (
           <div className="image-detail">
-            {selectedImage.mask_url ? (
+            <img
+              src={selectedImage.url}
+              alt={selectedImage.description || 'Site photo'}
+              className="image-detail-photo"
+            />
+            {selectedImage.mask_url && (
               <div className="image-detail-mask-section">
                 <p className="image-detail-mask-label">Segmentation Analysis</p>
                 <img
@@ -226,12 +231,6 @@ const PhotosPage = () => {
                   className="image-detail-photo"
                 />
               </div>
-            ) : (
-              <img
-                src={selectedImage.url}
-                alt={selectedImage.description || 'Site photo'}
-                className="image-detail-photo"
-              />
             )}
             <div className="image-detail-info">
               {selectedImage.category && (

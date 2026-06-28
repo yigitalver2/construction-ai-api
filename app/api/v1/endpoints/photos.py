@@ -65,6 +65,7 @@ async def get_photos(
             description=photo.description,
             confidence=photo.confidence,
             detected_objects=photo.detected_objects,
+            mask_url=photo.mask_url,
             project_id=photo.project_id,
             tags=photo.tags,
             user_id=photo.user_id,
