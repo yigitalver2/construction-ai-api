@@ -9,19 +9,9 @@ import './Topbar.css';
 const Topbar = ({ title = 'AI-Powered Reporting' }) => {
   const navigate = useNavigate();
   const { user, signOut, updateUser } = useAuth();
-  const [showExportMenu, setShowExportMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-
-  const handleExport = (format) => {
-    alert(`Export as ${format} - Feature coming soon!`);
-    setShowExportMenu(false);
-  };
-
-  const handleScheduleReport = () => {
-    alert('Schedule Report - Feature coming soon!');
-  };
 
   const handleLogout = () => {
     signOut();
@@ -66,39 +56,6 @@ const Topbar = ({ title = 'AI-Powered Reporting' }) => {
       </div>
 
       <div className="topbar-right">
-        {/* Export Dropdown */}
-        <div className="topbar-dropdown">
-          <button
-            className="topbar-btn"
-            onClick={() => setShowExportMenu(!showExportMenu)}
-          >
-            <span className="topbar-btn-icon">📥</span>
-            Export
-          </button>
-          {showExportMenu && (
-            <div className="topbar-dropdown-menu">
-              <button onClick={() => handleExport('ZIP')}>
-                Export as ZIP
-              </button>
-              <button onClick={() => handleExport('CSV')}>
-                Export as CSV
-              </button>
-              <button onClick={() => handleExport('JSON')}>
-                Export as JSON
-              </button>
-              <button onClick={() => handleExport('PDF')}>
-                Export as PDF
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Schedule Report Button */}
-        <button className="topbar-btn primary" onClick={handleScheduleReport}>
-          <span className="topbar-btn-icon">📅</span>
-          Schedule Report
-        </button>
-
         {/* User Menu */}
         <div className="topbar-dropdown">
           <button
@@ -132,13 +89,10 @@ const Topbar = ({ title = 'AI-Powered Reporting' }) => {
       </div>
 
       {/* Click outside to close dropdowns */}
-      {(showExportMenu || showUserMenu) && (
+      {showUserMenu && (
         <div
           className="topbar-overlay"
-          onClick={() => {
-            setShowExportMenu(false);
-            setShowUserMenu(false);
-          }}
+          onClick={() => setShowUserMenu(false)}
         />
       )}
 

@@ -9,7 +9,6 @@ import FilterChips from '../components/search/FilterChips';
 import ResultsToolbar from '../components/search/ResultsToolbar';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
-import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import { getStats, searchImages, getDistribution, getTimeline } from '../services/api';
 import './DashboardPage.css';
@@ -76,19 +75,6 @@ const DashboardPage = () => {
 
   return (
     <div className="dashboard-page">
-      {/* Scheduled Reports Banner */}
-      <div className="scheduled-reports-banner">
-        <div className="banner-content">
-          <span className="banner-icon">📅</span>
-          <span className="banner-text">
-            <strong>Scheduled Reports Active</strong> - Weekly reports will be sent every Monday
-          </span>
-        </div>
-        <Button variant="outline" size="sm">
-          Manage Schedules
-        </Button>
-      </div>
-
       {/* AI Query Panel */}
       <div className="query-panel">
         <h2 className="section-title">Enter Your Query</h2>
