@@ -3,7 +3,7 @@ Export API - generate a PDF damage-inspection report for selected photos.
 """
 import io
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 import requests
@@ -60,10 +60,10 @@ def _build_pdf(photos: List[Photo]) -> bytes:
     small = ParagraphStyle("Small", parent=styles["Normal"], fontSize=9, textColor=colors.grey)
 
     story = []
-    story.append(Paragraph("Hasar Tespit Raporu", title_style))
+    story.append(Paragraph("Damage Inspection Report", title_style))
     story.append(Paragraph(
-        f"Olusturulma: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')} &nbsp;|&nbsp; "
-        f"{len(photos)} fotograf",
+        f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} &nbsp;|&nbsp; "
+        f"{len(photos)} photo(s)",
         small,
     ))
     story.append(Spacer(1, 0.6 * cm))
@@ -72,16 +72,16 @@ def _build_pdf(photos: List[Photo]) -> bytes:
         story.append(Paragraph(
             f"{idx + 1}. {photo.original_filename or photo.filename}", h2))
         story.append(Paragraph(
-            f"Kategori: {photo.category or '-'} &nbsp;|&nbsp; "
-            f"Guven: {f'%{photo.confidence * 100:.1f}' if photo.confidence else '-'} &nbsp;|&nbsp; "
-            f"Tarih: {photo.analyzed_at.strftime('%Y-%m-%d') if photo.analyzed_at else '-'}",
+            f"Category: {photo.category or '-'} &nbsp;|&nbsp; "
+            f"Confidence: {f'{photo.confidence * 100:.1f}%' if photo.confidence else '-'} &nbsp;|&nbsp; "
+            f"Date: {photo.analyzed_at.strftime('%Y-%m-%d') if photo.analyzed_at else '-'}",
             small,
         ))
         story.append(Spacer(1, 0.3 * cm))
 
         # Original + mask images side by side
         img_cells = []
-        for label, url in (("Orijinal", get_photo_url(photo)), ("Segmentasyon", photo.mask_url)):
+        for label, url in (("Original", get_photo_url(photo)), ("Segmentation", photo.mask_url)):
             data = _fetch_image(url)
             if data is not None:
                 try:
@@ -102,14 +102,14 @@ def _build_pdf(photos: List[Photo]) -> bytes:
             story.append(Spacer(1, 0.3 * cm))
 
         # Damage classes table from detected_objects JSON
-        rows = [["Hasar Turu", "Kaplama %", "Guven %"]]
+        rows = [["Damage Type", "Coverage %", "Confidence %"]]
         try:
             payload = json.loads(photo.detected_objects) if photo.detected_objects else {}
             for c in payload.get("classes", []):
                 rows.append([
                     c.get("label", "-"),
-                    f"%{c.get('coverage', 0) * 100:.1f}",
-                    f"%{c.get('confidence', 0) * 100:.1f}",
+                    f"{c.get('coverage', 0) * 100:.1f}%",
+                    f"{c.get('confidence', 0) * 100:.1f}%",
                 ])
         except Exception:
             pass
@@ -126,7 +126,7 @@ def _build_pdf(photos: List[Photo]) -> bytes:
             ]))
             story.append(tbl)
         else:
-            story.append(Paragraph("Tespit edilen hasar yok.", small))
+            story.append(Paragraph("No damage detected.", small))
 
         if idx < len(photos) - 1:
             story.append(PageBreak())
@@ -154,7 +154,7 @@ async def export_report(
         raise HTTPException(status_code=404, detail="No photos to export")
 
     pdf_bytes = _build_pdf(photos)
-    filename = f"hasar-raporu-{datetime.utcnow().strftime('%Y%m%d-%H%M')}.pdf"
+    filename = f"hasar-raporu-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M')}.pdf"
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
         media_type="application/pdf",
