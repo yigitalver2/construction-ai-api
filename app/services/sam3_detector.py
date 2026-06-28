@@ -40,7 +40,11 @@ class Sam3Detector(BaseDetector):
             return
 
         import torch
-        from transformers import AutoProcessor, AutoModel
+        # Sam3Model = static-image segmentation head (returns Sam3ImageSegmentationOutput
+        # with .semantic_seg). AutoModel.from_pretrained("facebook/sam3") instead resolves
+        # to Sam3VideoModel, whose forward() requires an inference_session we don't have.
+        # The LoRA adapter was trained on Sam3Model (see adapter_config base_model_class).
+        from transformers import Sam3Model, Sam3Processor
         from peft import PeftModel
 
         repo = settings.SAM3_REPO_PATH
@@ -52,9 +56,9 @@ class Sam3Detector(BaseDetector):
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        print(f"[sam3] Loading base model {settings.SAM3_MODEL_NAME} ...")
-        processor = AutoProcessor.from_pretrained(settings.SAM3_MODEL_NAME, token=token)
-        base_model = AutoModel.from_pretrained(settings.SAM3_MODEL_NAME, token=token)
+        print(f"[sam3] Loading base model {settings.SAM3_MODEL_NAME} (Sam3Model) ...")
+        processor = Sam3Processor.from_pretrained(settings.SAM3_MODEL_NAME, token=token)
+        base_model = Sam3Model.from_pretrained(settings.SAM3_MODEL_NAME, token=token)
 
         print(f"[sam3] Applying LoRA adapter from {ckpt} ...")
         # Load the base model first, then stack the trained LoRA adapter on top.
