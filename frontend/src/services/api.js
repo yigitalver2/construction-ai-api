@@ -108,16 +108,26 @@ export const getTopCategories = async () => {
   return response.data;
 };
 
-// Export API
-export const exportResults = async (imageIds, format = 'zip') => {
-  if (USE_MOCK) {
-    await delay(1000);
-    alert(`Exporting ${imageIds.length} images as ${format.toUpperCase()}`);
-    return { success: true, downloadUrl: '#' };
-  }
-  const response = await apiClient.post('/export', {
-    image_ids: imageIds,
-    format
-  });
-  return response.data;
+// Export API — downloads a PDF damage report. Pass an empty/undefined
+// imageIds to export all of the user's photos.
+export const exportResults = async (imageIds, format = 'pdf') => {
+  const response = await apiClient.post(
+    '/export',
+    { image_ids: imageIds && imageIds.length ? imageIds : null, format },
+    { responseType: 'blob' }
+  );
+
+  // Trigger a browser download of the returned PDF.
+  const blob = new Blob([response.data], { type: 'application/pdf' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const ts = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+  link.download = `hasar-raporu-${ts}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+
+  return { success: true };
 };

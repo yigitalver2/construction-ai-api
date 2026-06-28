@@ -32,3 +32,6 @@ cloudinary>=1.36.0
 # Utilities
 python-dateutil==2.8.2
 email-validator==2.1.0
+
+# PDF report export
+reportlab==4.1.0

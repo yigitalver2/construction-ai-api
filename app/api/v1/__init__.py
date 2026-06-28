@@ -7,6 +7,7 @@ from app.api.v1.endpoints.stats import router as stats_router
 from app.api.v1.endpoints.photos import router as photos_router
 from app.api.v1.endpoints.analytics import router as analytics_router
 from app.api.v1.endpoints.search import router as search_router
+from app.api.v1.endpoints.export import router as export_router
 
 api_router = APIRouter()
 
@@ -24,3 +25,6 @@ api_router.include_router(analytics_router)
 
 # Include search routes
 api_router.include_router(search_router)
+
+# Include export routes
+api_router.include_router(export_router)

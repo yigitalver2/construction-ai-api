@@ -4,7 +4,7 @@ import Button from '../components/common/Button';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import Modal from '../components/common/Modal';
 import EmptyState from '../components/common/EmptyState';
-import { getPhotos, uploadPhotos } from '../services/api';
+import { getPhotos, uploadPhotos, exportResults } from '../services/api';
 import './PhotosPage.css';
 
 const PhotosPage = () => {
@@ -77,12 +77,23 @@ const PhotosPage = () => {
     });
   };
 
-  const handleExportSelected = () => {
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportSelected = async () => {
     if (selectedPhotos.length === 0) {
       alert('Please select photos to export');
       return;
     }
-    alert(`Exporting ${selectedPhotos.length} photo(s)`);
+    try {
+      setExporting(true);
+      const ids = selectedPhotos.map(p => p.image_id);
+      await exportResults(ids, 'pdf');
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Export failed');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const filteredPhotos = photos.filter(photo => {
@@ -139,8 +150,8 @@ const PhotosPage = () => {
           <option value="oldest">Oldest First</option>
         </select>
         {selectedPhotos.length > 0 && (
-          <Button variant="outline" onClick={handleExportSelected}>
-            📥 Export Selected ({selectedPhotos.length})
+          <Button variant="outline" onClick={handleExportSelected} disabled={exporting}>
+            {exporting ? '⏳ Generating PDF...' : `📥 Export PDF (${selectedPhotos.length})`}
           </Button>
         )}
       </div>
