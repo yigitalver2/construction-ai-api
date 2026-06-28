@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     # AI Services
     GEMINI_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o-mini"
 
     # Cloudinary (image storage)
     CLOUDINARY_CLOUD_NAME: str = ""
