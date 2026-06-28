@@ -94,6 +94,7 @@ class Sam3Detector(BaseDetector):
         print(f"[sam3] Model ready on {device}.")
 
     def analyze(self, image_path: str) -> DetectionResult:
+        import time
         import torch
         from PIL import Image
 
@@ -103,17 +104,22 @@ class Sam3Detector(BaseDetector):
         processor = Sam3Detector._processor
         device = Sam3Detector._device
 
+        # --- TEMP DEBUG (remove later): time each step of the forward loop ---
+        print(f"[DEBUG] analyze() start: {image_path}", flush=True)
         gorsel = Image.open(image_path).convert("RGB")
 
         # Görseli bir kez işle — tüm sınıflar için aynı pixel_values
         image_inputs = processor.image_processor(images=gorsel, return_tensors="pt")
         pixel_values = image_inputs["pixel_values"].to(device)
+        print(f"[DEBUG] image preprocessed, pixel_values shape={tuple(pixel_values.shape)}", flush=True)
 
         classes = []
 
         model.eval()
         with torch.no_grad():
-            for label in DAMAGE_CLASSES:
+            for i, label in enumerate(DAMAGE_CLASSES):
+                t0 = time.time()
+                print(f"[DEBUG] [{i+1}/{len(DAMAGE_CLASSES)}] '{label}' forward start ...", flush=True)
                 text_inputs = processor.tokenizer(
                     label,
                     return_tensors="pt",
@@ -126,6 +132,9 @@ class Sam3Detector(BaseDetector):
                     input_ids=text_inputs["input_ids"].to(device),
                     attention_mask=text_inputs["attention_mask"].to(device),
                 )
+                if device == "cuda":
+                    torch.cuda.synchronize()  # so the timing reflects real GPU work
+                print(f"[DEBUG] [{i+1}/{len(DAMAGE_CLASSES)}] '{label}' forward done in {time.time()-t0:.2f}s", flush=True)
 
                 # semantic_seg: (1, 1, H, W) logits
                 logits = outputs.semantic_seg.squeeze()
