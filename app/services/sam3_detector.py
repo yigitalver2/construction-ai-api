@@ -106,7 +106,12 @@ class Sam3Detector(BaseDetector):
 
         # --- TEMP DEBUG (remove later): time each step of the forward loop ---
         print(f"[DEBUG] analyze() start: {image_path}", flush=True)
-        gorsel = Image.open(image_path).convert("RGB")
+        if image_path.startswith(("http://", "https://")):
+            import urllib.request, io
+            with urllib.request.urlopen(image_path) as resp:
+                gorsel = Image.open(io.BytesIO(resp.read())).convert("RGB")
+        else:
+            gorsel = Image.open(image_path).convert("RGB")
 
         # Görseli bir kez işle — tüm sınıflar için aynı pixel_values
         image_inputs = processor.image_processor(images=gorsel, return_tensors="pt")

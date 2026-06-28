@@ -27,6 +27,7 @@ pydantic-settings==2.1.0
 
 # AI Services
 google-generativeai==0.3.2
+cloudinary>=1.36.0
 
 # Utilities
 python-dateutil==2.8.2

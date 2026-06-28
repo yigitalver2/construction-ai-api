@@ -14,15 +14,19 @@ from app.models.photo import Photo
 from app.schemas.photo import PhotoResponse, PhotoListResponse, UploadResponse
 from app.api.v1.endpoints.auth import get_current_user
 from app.services.analysis_service import analyze_photo, analyze_photo_by_id
+from app.services.storage import upload_image, delete_image
 
 router = APIRouter(prefix="/photos", tags=["Photos"])
 
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
 
-def get_photo_url(filename: str) -> str:
+def get_photo_url(photo) -> str:
+    """Return the image URL — Cloudinary URL stored in file_path, fallback to local."""
+    if photo.file_path and photo.file_path.startswith("http"):
+        return photo.file_path
     base = settings.PUBLIC_BASE_URL.rstrip("/")
-    return f"{base}/uploads/{filename}"
+    return f"{base}/uploads/{photo.filename}"
 
 
 @router.get("", response_model=List[PhotoResponse])
@@ -48,7 +52,7 @@ async def get_photos(
 
     result = []
     for photo in photos:
-        photo_url = get_photo_url(photo.filename)
+        photo_url = get_photo_url(photo)
         result.append(PhotoResponse(
             id=photo.id,
             image_id=photo.id,
@@ -100,15 +104,13 @@ async def upload_photos(
 
             ext = os.path.splitext(file.filename)[1] if file.filename else ".jpg"
             unique_filename = f"{uuid.uuid4().hex}{ext}"
-            file_path = os.path.join(settings.UPLOAD_DIR, unique_filename)
 
-            with open(file_path, "wb") as f:
-                f.write(contents)
+            image_url = upload_image(contents, unique_filename)
 
             db_photo = Photo(
                 filename=unique_filename,
                 original_filename=file.filename or "unknown",
-                file_path=file_path,
+                file_path=image_url,
                 file_size=len(contents),
                 mime_type=file.content_type,
                 project_id=project_id,
@@ -122,8 +124,8 @@ async def upload_photos(
             background_tasks.add_task(analyze_photo_by_id, db_photo.id)
 
             photo_response = PhotoResponse.model_validate(db_photo)
-            photo_response.url = get_photo_url(unique_filename)
-            photo_response.thumbnail = get_photo_url(unique_filename)
+            photo_response.url = image_url
+            photo_response.thumbnail = image_url
             photo_response.status = "pending"
             uploaded_photos.append(photo_response)
 
@@ -153,8 +155,8 @@ async def get_photo(
         raise HTTPException(status_code=404, detail="Photo not found")
 
     photo_response = PhotoResponse.model_validate(photo)
-    photo_response.url = get_photo_url(photo.filename)
-    photo_response.thumbnail = get_photo_url(photo.filename)
+    photo_response.url = get_photo_url(photo)
+    photo_response.thumbnail = get_photo_url(photo)
     return photo_response
 
 
@@ -172,8 +174,7 @@ async def delete_photo(
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
 
-    if os.path.exists(photo.file_path):
-        os.remove(photo.file_path)
+    delete_image(photo.filename)
 
     db.delete(photo)
     db.commit()
@@ -201,7 +202,7 @@ async def analyze_photo_endpoint(
         raise HTTPException(status_code=500, detail=f"Analysis failed: {exc}")
 
     photo_response = PhotoResponse.model_validate(photo)
-    photo_response.url = get_photo_url(photo.filename)
-    photo_response.thumbnail = get_photo_url(photo.filename)
+    photo_response.url = get_photo_url(photo)
+    photo_response.thumbnail = get_photo_url(photo)
     photo_response.status = "analyzed" if photo.category else "pending"
     return photo_response
