@@ -119,6 +119,7 @@ class Sam3Detector(BaseDetector):
         print(f"[DEBUG] image preprocessed, pixel_values shape={tuple(pixel_values.shape)}", flush=True)
 
         classes = []
+        detected_masks = {}  # label -> (H, W) bool mask for visualization
 
         model.eval()
         with torch.no_grad():
@@ -138,7 +139,7 @@ class Sam3Detector(BaseDetector):
                     attention_mask=text_inputs["attention_mask"].to(device),
                 )
                 if device == "cuda":
-                    torch.cuda.synchronize()  # so the timing reflects real GPU work
+                    torch.cuda.synchronize()
                 print(f"[DEBUG] [{i+1}/{len(DAMAGE_CLASSES)}] '{label}' forward done in {time.time()-t0:.2f}s", flush=True)
 
                 # semantic_seg: (1, 1, H, W) logits
@@ -159,5 +160,102 @@ class Sam3Detector(BaseDetector):
                         confidence=round(confidence, 4),
                     )
                 )
+                detected_masks[label] = mask
 
-        return DetectionResult(classes=classes, backend=self.backend_name)
+        mask_url = None
+        if detected_masks:
+            mask_url = self._render_and_upload(gorsel, detected_masks, classes)
+
+        return DetectionResult(classes=classes, backend=self.backend_name, mask_url=mask_url)
+
+    # Color palette — one distinct color per damage class
+    _CLASS_COLORS = {
+        "Crack":         (220,  20,  60),
+        "ACrack":        (255, 127,   0),
+        "Spalling":      (255, 215,   0),
+        "Efflorescence": (144, 238, 144),
+        "ExposedRebars": (  0, 160,   0),
+        "Cavity":        (  0, 210, 100),
+        "Restformwork":  (  0, 206, 209),
+        "Rockpocket":    (188, 143, 143),
+        "Hollowareas":   (135, 206, 235),
+        "Rust":          ( 65, 105, 225),
+        "Weathering":    ( 75,   0, 130),
+        "Graffiti":      (148,   0, 211),
+        "Wetspot":       (255,  20, 147),
+        "Bearing":       (139,   0,   0),
+        "Drainage":      (101,  67,  33),
+        "EJoint":        (128, 128, 128),
+        "JTape":         (192, 192, 192),
+        "PEquipment":    (255, 182, 193),
+        "WConccor":      (173, 255,  47),
+    }
+
+    def _render_and_upload(self, original_image, detected_masks: dict, classes) -> str:
+        """Build side-by-side visualization (original | colored mask + legend) and upload."""
+        import io
+        from PIL import Image, ImageDraw, ImageFont
+
+        SIZE = 512  # each panel is 512×512 to keep the upload small
+
+        # --- left panel: original resized ---
+        left = original_image.resize((SIZE, SIZE), Image.LANCZOS)
+
+        # --- right panel: colored segmentation mask ---
+        mask_h, mask_w = next(iter(detected_masks.values())).shape
+        composite = np.zeros((mask_h, mask_w, 3), dtype=np.uint8)
+        for label, mask in detected_masks.items():
+            color = self._CLASS_COLORS.get(label, (200, 200, 200))
+            composite[mask] = color
+        right = Image.fromarray(composite).resize((SIZE, SIZE), Image.NEAREST)
+
+        # --- legend (drawn on the right panel) ---
+        draw = ImageDraw.Draw(right)
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
+            font_small = font
+        except Exception:
+            font = ImageFont.load_default()
+            font_small = font
+
+        legend_x, legend_y = SIZE - 185, SIZE - len(classes) * 18 - 10
+        # semi-transparent legend background
+        overlay = Image.new("RGBA", right.size, (0, 0, 0, 0))
+        bg = ImageDraw.Draw(overlay)
+        bg.rectangle(
+            [legend_x - 4, legend_y - 4, SIZE - 2, SIZE - 2],
+            fill=(0, 0, 0, 140),
+        )
+        right = right.convert("RGBA")
+        right = Image.alpha_composite(right, overlay).convert("RGB")
+        draw = ImageDraw.Draw(right)
+
+        for i, dc in enumerate(sorted(classes, key=lambda c: c.coverage, reverse=True)):
+            color = self._CLASS_COLORS.get(dc.label, (200, 200, 200))
+            y = legend_y + i * 18
+            draw.rectangle([legend_x, y + 2, legend_x + 12, y + 14], fill=color)
+            draw.text(
+                (legend_x + 16, y),
+                f"{dc.label} (%{dc.coverage * 100:.1f})",
+                fill=(255, 255, 255),
+                font=font_small,
+            )
+
+        # --- combine side by side ---
+        canvas = Image.new("RGB", (SIZE * 2, SIZE), (30, 30, 30))
+        canvas.paste(left, (0, 0))
+        canvas.paste(right, (SIZE, 0))
+
+        # add panel titles
+        title_draw = ImageDraw.Draw(canvas)
+        title_draw.text((SIZE // 2 - 55, 6), "Orijinal Gorsel", fill=(255, 255, 255), font=font)
+        title_draw.text((SIZE + SIZE // 2 - 80, 6), "Tespit Edilen Hasar Turleri", fill=(255, 255, 255), font=font)
+
+        # --- upload to Cloudinary ---
+        from app.services.storage import upload_image
+        buf = io.BytesIO()
+        canvas.save(buf, format="JPEG", quality=88)
+        buf.seek(0)
+
+        unique_name = f"mask_{id(detected_masks)}.jpg"
+        return upload_image(buf.read(), unique_name)

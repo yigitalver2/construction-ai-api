@@ -40,6 +40,8 @@ class PhotoResponse(PhotoBase):
     created_at: datetime
     analyzed_at: Optional[datetime] = None
     
+    mask_url: Optional[str] = None
+
     # Virtual fields for frontend compatibility
     thumbnail: Optional[str] = None
     url: Optional[str] = None

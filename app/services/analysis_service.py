@@ -29,6 +29,7 @@ def analyze_photo(photo: Photo, db: Session) -> Photo:
     photo.confidence = result.confidence
     photo.detected_objects = result.detected_objects_json()
     photo.description = result.description()
+    photo.mask_url = result.mask_url
     photo.analyzed_at = datetime.utcnow()
 
     db.add(photo)

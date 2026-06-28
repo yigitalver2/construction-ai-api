@@ -31,6 +31,7 @@ class Photo(Base):
     detected_objects = Column(Text, nullable=True)  # JSON string of detected objects
     confidence = Column(Float, nullable=True)  # Overall confidence score
     description = Column(Text, nullable=True)  # AI-generated description
+    mask_url = Column(Text, nullable=True)  # Cloudinary URL of segmentation mask visualization
     
     # Organization
     project_id = Column(String(100), nullable=True)

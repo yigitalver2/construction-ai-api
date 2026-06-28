@@ -66,6 +66,7 @@ class DetectionResult:
     """
     classes: List[DetectedClass] = field(default_factory=list)
     backend: str = "unknown"
+    mask_url: Optional[str] = None
 
     @property
     def category(self) -> Optional[str]:
