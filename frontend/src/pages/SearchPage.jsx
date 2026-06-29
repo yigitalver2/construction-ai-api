@@ -91,7 +91,14 @@ const SearchPage = () => {
           </div>
           <div className="search-results-grid">
             {results.map((image) => (
-              <ImageCard key={image.id} image={image} />
+              <ImageCard
+                key={image.id}
+                image={{
+                  ...image,
+                  thumbnail_url: image.thumbnail || image.url,
+                  uploaded_at: image.created_at,
+                }}
+              />
             ))}
           </div>
         </div>
