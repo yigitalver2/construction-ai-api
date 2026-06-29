@@ -6,7 +6,7 @@ import SettingsModal from '../components/modals/SettingsModal';
 import { authService } from '../services/authService';
 import './Topbar.css';
 
-const Topbar = ({ title = 'AI-Powered Reporting' }) => {
+const Topbar = ({ title = 'AI-Powered Reporting', onMenuToggle }) => {
   const navigate = useNavigate();
   const { user, signOut, updateUser } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -52,6 +52,9 @@ const Topbar = ({ title = 'AI-Powered Reporting' }) => {
   return (
     <header className="topbar">
       <div className="topbar-left">
+        <button className="topbar-menu-btn" onClick={onMenuToggle} aria-label="Toggle sidebar">
+          <span /><span /><span />
+        </button>
         <h1 className="topbar-title">{title}</h1>
       </div>
 

@@ -6,9 +6,9 @@
 
 .app-main {
   flex: 1;
-  margin-left: 260px;
   display: flex;
   flex-direction: column;
+  transition: margin-left 0.25s ease;
 }
 
 .app-content {
@@ -17,17 +17,21 @@
   min-height: calc(100vh - 70px);
 }
 
-@media (max-width: 1024px) {
-  .app-main {
-    margin-left: 0;
-  }
-  
-  .app-content {
-    padding: 1.5rem;
-  }
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 99;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
+  .app-main {
+    margin-left: 0 !important;
+  }
+
   .app-content {
     padding: 1rem;
   }

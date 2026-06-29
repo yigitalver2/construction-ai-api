@@ -10,6 +10,37 @@
   top: 0;
   overflow-y: auto;
   z-index: 100;
+  transition: width 0.25s ease, transform 0.25s ease;
+}
+
+.sidebar.collapsed {
+  width: 64px;
+  overflow: visible;
+}
+
+.sidebar.collapsed .sidebar-nav-item {
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+.sidebar.collapsed .sidebar-nav-icon {
+  margin-right: 0;
+  font-size: 1.4rem;
+}
+
+.sidebar.collapsed .sidebar-header {
+  min-height: 70px;
+}
+
+/* Mobile: hidden by default, slides in when open */
+@media (max-width: 767px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
 }
 
 .sidebar-header {
