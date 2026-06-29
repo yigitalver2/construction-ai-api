@@ -6,6 +6,7 @@ import { GOOGLE_CLIENT_ID } from './config/constants';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import PublicRoute from './components/auth/PublicRoute';
 import AppLayout from './layouts/AppLayout';
+import SplashPage from './pages/SplashPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import SearchPage from './pages/SearchPage';
@@ -19,19 +20,22 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
-            {/* Public Route - Login Page (redirects to dashboard if already logged in) */}
-            <Route 
-              path="/login" 
+            {/* Public splash / landing page */}
+            <Route path="/" element={<SplashPage />} />
+
+            {/* Login */}
+            <Route
+              path="/login"
               element={
                 <PublicRoute>
                   <LoginPage />
                 </PublicRoute>
-              } 
+              }
             />
-            
-            {/* Protected Routes - Requires Authentication */}
-            <Route 
-              path="/" 
+
+            {/* Protected app routes */}
+            <Route
+              path="/app"
               element={
                 <ProtectedRoute>
                   <AppLayout />

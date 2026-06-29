@@ -4,10 +4,10 @@ import './Sidebar.css';
 
 const Sidebar = ({ isOpen, collapsed, onClose }) => {
   const menuItems = [
-    { path: '/', label: 'Dashboard', icon: '📊' },
-    { path: '/search', label: 'AI Search', icon: '🔍' },
-    { path: '/photos', label: 'Site Photos', icon: '📷' },
-    { path: '/analytics', label: 'Analytics', icon: '📈' },
+    { path: '/app', label: 'Dashboard', icon: '📊' },
+    { path: '/app/search', label: 'AI Search', icon: '🔍' },
+    { path: '/app/photos', label: 'Site Photos', icon: '📷' },
+    { path: '/app/analytics', label: 'Analytics', icon: '📈' },
   ];
 
   const recentQueries = [
