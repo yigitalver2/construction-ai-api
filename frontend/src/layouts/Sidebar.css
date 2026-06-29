@@ -1,13 +1,13 @@
 .sidebar {
   width: 260px;
-  height: 100vh;
+  height: calc(100vh - 70px);
   background: #1a1d2e;
   color: #fff;
   display: flex;
   flex-direction: column;
   position: fixed;
   left: 0;
-  top: 0;
+  top: 70px;
   overflow-y: auto;
   z-index: 100;
   transition: width 0.25s ease, transform 0.25s ease;
@@ -28,9 +28,6 @@
   font-size: 1.4rem;
 }
 
-.sidebar.collapsed .sidebar-header {
-  min-height: 70px;
-}
 
 /* Mobile: hidden by default, slides in when open */
 @media (max-width: 767px) {
